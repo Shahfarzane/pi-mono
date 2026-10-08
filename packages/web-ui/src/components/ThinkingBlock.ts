@@ -34,7 +34,7 @@ export class ThinkingBlock extends LitElement {
 					@click=${this.toggleExpanded}
 				>
 					<span class="transition-transform inline-block ${this.isExpanded ? "rotate-90" : ""}">${icon(ChevronRight, "sm")}</span>
-					<span class="${shimmerClasses}">Thinking...</span>
+					<span class="${shimmerClasses}">${this.isStreaming ? "Thinking..." : "Thinking"}</span>
 				</div>
 				${this.isExpanded ? html`<markdown-block .content=${this.content} .isThinking=${true}></markdown-block>` : ""}
 			</div>

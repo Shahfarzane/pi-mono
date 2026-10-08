@@ -521,21 +521,27 @@ export class MessageEditor extends LitElement {
 							this.isStreaming
 								? html`
 									${Button({
-										variant: "ghost",
+										variant: "default",
 										size: "icon",
 										onClick: this.onAbort,
-										children: icon(Square, "sm"),
+										children: icon(Square, "xs"),
 										className: "h-8 w-8",
+										title: "Stop",
 									})}
 								`
 								: html`
 									${Button({
-										variant: "ghost",
+										// The one filled control in the composer, once there is something to send.
+										variant:
+											(this.value.trim() || this.attachments.length > 0) && !this.processingFiles
+												? "default"
+												: "ghost",
 										size: "icon",
 										onClick: this.handleSend,
 										disabled: (!this.value.trim() && this.attachments.length === 0) || this.processingFiles,
 										children: icon(ArrowUp, "sm"),
 										className: "h-8 w-8",
+										title: "Send",
 									})}
 								`
 						}
