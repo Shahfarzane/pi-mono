@@ -5,11 +5,23 @@ import type { Model } from "@mariozechner/pi-ai";
 import { html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { Brain, Loader2, Paperclip, Send, Sparkles, Square } from "lucide";
+import { ArrowUp, Brain, Loader2, Paperclip, Square } from "lucide";
 import { type Attachment, loadAttachment } from "../utils/attachment-utils.js";
 import { i18n } from "../utils/i18n.js";
 import "./AttachmentTile.js";
 import type { ThinkingLevel } from "@mariozechner/pi-agent-core";
+
+/** An entry in the "/" completion menu of the message editor. */
+export interface SlashCommandItem {
+	id: string;
+	title: string;
+	description?: string;
+	hint?: string;
+	/** Text that replaces the typed "/query" token. */
+	value: string;
+}
+
+export type SlashCommandProvider = (query: string) => SlashCommandItem[] | Promise<SlashCommandItem[]>;
 
 @customElement("message-editor")
 export class MessageEditor extends LitElement {
@@ -39,6 +51,8 @@ export class MessageEditor extends LitElement {
 	@property() onModelSelect?: () => void;
 	@property() onThinkingChange?: (level: "off" | "minimal" | "low" | "medium" | "high") => void;
 	@property() onFilesChange?: (files: Attachment[]) => void;
+	@property() slashCommandProvider?: SlashCommandProvider;
+	@property() historyProvider?: () => string | undefined;
 	@property() attachments: Attachment[] = [];
 	@property() maxFiles = 10;
 	@property() maxFileSize = 20 * 1024 * 1024; // 20MB
@@ -47,7 +61,11 @@ export class MessageEditor extends LitElement {
 
 	@state() processingFiles = false;
 	@state() isDragging = false;
+	@state() private slashItems: SlashCommandItem[] = [];
+	@state() private slashIndex = 0;
+	private slashRequest = 0;
 	private fileInputRef = createRef<HTMLInputElement>();
+	private slashMenuRef = createRef<HTMLDivElement>();
 
 	protected override createRenderRoot(): HTMLElement | DocumentFragment {
 		return this;
@@ -57,9 +75,103 @@ export class MessageEditor extends LitElement {
 		const textarea = e.target as HTMLTextAreaElement;
 		this.value = textarea.value;
 		this.onInput?.(this.value);
+		this.updateSlashMenu();
 	};
 
+	/** The "/query" token ending at the caret, if the caret sits in one. */
+	private findSlashToken(): { start: number; end: number; query: string } | undefined {
+		const textarea = this.textareaRef.value;
+		if (!textarea || textarea.selectionStart !== textarea.selectionEnd) return undefined;
+		const end = textarea.selectionStart;
+		const match = /(^|\s)\/(\S*)$/.exec(this.value.slice(0, end));
+		if (!match) return undefined;
+		return { start: end - match[2].length - 1, end, query: match[2] };
+	}
+
+	private async updateSlashMenu() {
+		const token = this.slashCommandProvider ? this.findSlashToken() : undefined;
+		const request = ++this.slashRequest;
+		if (!token || !this.slashCommandProvider) {
+			this.slashItems = [];
+			return;
+		}
+		let items: SlashCommandItem[] = [];
+		try {
+			items = await this.slashCommandProvider(token.query);
+		} catch (error) {
+			console.error("Slash command provider failed:", error);
+		}
+		// A newer keystroke started another lookup; drop this stale result.
+		if (request !== this.slashRequest) return;
+		this.slashItems = items;
+		this.slashIndex = 0;
+	}
+
+	private closeSlashMenu() {
+		this.slashRequest++;
+		this.slashItems = [];
+		this.slashIndex = 0;
+	}
+
+	private applySlashItem(item: SlashCommandItem) {
+		// Recompute the token: the caret may have moved since the menu opened.
+		const token = this.findSlashToken();
+		this.closeSlashMenu();
+		if (!token) return;
+		const insert = `${item.value} `;
+		this.value = this.value.slice(0, token.start) + insert + this.value.slice(token.end);
+		this.onInput?.(this.value);
+		this.placeCaret(token.start + insert.length);
+	}
+
+	private placeCaret(position: number) {
+		this.updateComplete.then(() => {
+			const textarea = this.textareaRef.value;
+			if (!textarea) return;
+			textarea.focus();
+			textarea.setSelectionRange(position, position);
+		});
+	}
+
+	private moveSlashSelection(delta: number) {
+		const count = this.slashItems.length;
+		this.slashIndex = (this.slashIndex + delta + count) % count;
+		this.updateComplete.then(() => {
+			const selected = this.slashMenuRef.value?.querySelectorAll("[data-slash-item]")[this.slashIndex];
+			selected?.scrollIntoView({ block: "nearest" });
+		});
+	}
+
 	private handleKeyDown = (e: KeyboardEvent) => {
+		if (this.slashItems.length > 0 && !e.isComposing) {
+			if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+				e.preventDefault();
+				this.moveSlashSelection(e.key === "ArrowDown" ? 1 : -1);
+				return;
+			}
+			if ((e.key === "Enter" && !e.shiftKey) || e.key === "Tab") {
+				e.preventDefault();
+				this.applySlashItem(this.slashItems[this.slashIndex]);
+				return;
+			}
+			if (e.key === "Escape") {
+				e.preventDefault();
+				this.closeSlashMenu();
+				return;
+			}
+		}
+
+		if (e.key === "ArrowUp" && this.historyProvider && !this.value) {
+			const previous = this.historyProvider();
+			if (previous) {
+				e.preventDefault();
+				this.value = previous;
+				this.onInput?.(this.value);
+				this.placeCaret(previous.length);
+			}
+			return;
+		}
+
 		if (e.key === "Enter" && !e.shiftKey) {
 			e.preventDefault();
 			if (!this.isStreaming && !this.processingFiles && (this.value.trim() || this.attachments.length > 0)) {
@@ -232,6 +344,39 @@ export class MessageEditor extends LitElement {
 		}
 	}
 
+	private renderSlashMenu() {
+		if (this.slashItems.length === 0) return "";
+		return html`
+			<div
+				class="absolute bottom-full left-0 right-0 mb-2 z-20 max-h-64 overflow-y-auto rounded-lg border border-border bg-popover text-popover-foreground shadow-md"
+				${ref(this.slashMenuRef)}
+			>
+				${this.slashItems.map(
+					(item, index) => html`
+						<div
+							data-slash-item
+							class="px-3 py-2 cursor-pointer flex items-center justify-between gap-3 ${index === this.slashIndex ? "bg-accent" : "hover:bg-muted"}"
+							@mousedown=${(e: MouseEvent) => {
+								// Keep textarea focus so the caret position survives the click.
+								e.preventDefault();
+								this.applySlashItem(item);
+							}}
+							@mouseenter=${() => {
+								this.slashIndex = index;
+							}}
+						>
+							<div class="min-w-0">
+								<div class="text-sm font-medium truncate">${item.title}</div>
+								${item.description ? html`<div class="text-xs text-muted-foreground truncate">${item.description}</div>` : ""}
+							</div>
+							${item.hint ? html`<span class="text-xs text-muted-foreground shrink-0">${item.hint}</span>` : ""}
+						</div>
+					`,
+				)}
+			</div>
+		`;
+	}
+
 	override render() {
 		// Check if current model supports thinking/reasoning
 		const model = this.currentModel;
@@ -254,6 +399,8 @@ export class MessageEditor extends LitElement {
 				`
 						: ""
 				}
+
+				${this.renderSlashMenu()}
 
 				<!-- Attachments -->
 				${
@@ -283,6 +430,7 @@ export class MessageEditor extends LitElement {
 					@input=${this.handleTextareaInput}
 					@keydown=${this.handleKeyDown}
 					@paste=${this.handlePaste}
+					@blur=${() => this.closeSlashMenu()}
 					${ref(this.textareaRef)}
 				></textarea>
 
@@ -363,10 +511,7 @@ export class MessageEditor extends LitElement {
 												this.onModelSelect?.();
 											});
 										},
-										children: html`
-											${icon(Sparkles, "sm")}
-											<span class="ml-1">${this.currentModel.id}</span>
-										`,
+										children: html`<span>${this.currentModel.id}</span>`,
 										className: "h-8 text-xs truncate",
 									})}
 								`
@@ -389,7 +534,7 @@ export class MessageEditor extends LitElement {
 										size: "icon",
 										onClick: this.handleSend,
 										disabled: (!this.value.trim() && this.attachments.length === 0) || this.processingFiles,
-										children: html`<div style="transform: rotate(-45deg)">${icon(Send, "sm")}</div>`,
+										children: icon(ArrowUp, "sm"),
 										className: "h-8 w-8",
 									})}
 								`

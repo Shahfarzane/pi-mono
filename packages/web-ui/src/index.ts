@@ -10,7 +10,7 @@ export { ConsoleBlock } from "./components/ConsoleBlock.js";
 export { CustomProviderCard } from "./components/CustomProviderCard.js";
 export { ExpandableSection } from "./components/ExpandableSection.js";
 export { Input } from "./components/Input.js";
-export { MessageEditor } from "./components/MessageEditor.js";
+export { MessageEditor, type SlashCommandItem, type SlashCommandProvider } from "./components/MessageEditor.js";
 export { MessageList } from "./components/MessageList.js";
 // Message components
 export type { ArtifactMessage, UserMessageWithAttachments } from "./components/Messages.js";
@@ -57,7 +57,7 @@ export { ApiKeyPromptDialog } from "./dialogs/ApiKeyPromptDialog.js";
 export { AttachmentOverlay } from "./dialogs/AttachmentOverlay.js";
 export { CustomProviderDialog } from "./dialogs/CustomProviderDialog.js";
 // Dialogs
-export { ModelSelector } from "./dialogs/ModelSelector.js";
+export { ModelSelector, type ModelSelectorThinkingOptions } from "./dialogs/ModelSelector.js";
 export { PersistentStorageDialog } from "./dialogs/PersistentStorageDialog.js";
 export { ProvidersModelsTab } from "./dialogs/ProvidersModelsTab.js";
 export { SessionListDialog } from "./dialogs/SessionListDialog.js";

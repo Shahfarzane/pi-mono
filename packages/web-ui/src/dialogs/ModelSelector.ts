@@ -3,7 +3,8 @@ import { Badge } from "@mariozechner/mini-lit/dist/Badge.js";
 import { Button } from "@mariozechner/mini-lit/dist/Button.js";
 import { DialogHeader } from "@mariozechner/mini-lit/dist/Dialog.js";
 import { DialogBase } from "@mariozechner/mini-lit/dist/DialogBase.js";
-import { getModels, getProviders, type Model, modelsAreEqual } from "@mariozechner/pi-ai";
+import type { ThinkingLevel } from "@mariozechner/pi-agent-core";
+import { getModels, getProviders, type Model, modelsAreEqual, supportsXhigh } from "@mariozechner/pi-ai";
 import { html, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
@@ -14,6 +15,12 @@ import type { AutoDiscoveryProviderType } from "../storage/stores/custom-provide
 import { formatModelCost } from "../utils/format.js";
 import { i18n } from "../utils/i18n.js";
 import { discoverModels } from "../utils/model-discovery.js";
+
+/** Thinking level control shown inside the selector when the caller passes it to open(). */
+export interface ModelSelectorThinkingOptions {
+	level: ThinkingLevel;
+	onChange: (level: ThinkingLevel) => void;
+}
 
 /**
  * Score a query against a text using subsequence matching.
@@ -56,8 +63,10 @@ export class ModelSelector extends DialogBase {
 	@state() selectedIndex = 0;
 	@state() private navigationMode: "mouse" | "keyboard" = "mouse";
 	@state() private customProviderModels: Model<any>[] = [];
+	@state() private thinkingLevel?: ThinkingLevel;
 
 	private onSelectCallback?: (model: Model<any>) => void;
+	private onThinkingChange?: (level: ThinkingLevel) => void;
 	private allowedProviders?: Set<string>;
 	private scrollContainerRef = createRef<HTMLDivElement>();
 	private searchInputRef = createRef<HTMLInputElement>();
@@ -69,12 +78,17 @@ export class ModelSelector extends DialogBase {
 		currentModel: Model<any> | null,
 		onSelect: (model: Model<any>) => void,
 		allowedProviders?: string[],
+		thinking?: ModelSelectorThinkingOptions,
 	) {
 		const selector = new ModelSelector();
 		selector.currentModel = currentModel;
 		selector.onSelectCallback = onSelect;
 		if (allowedProviders) {
 			selector.allowedProviders = new Set(allowedProviders);
+		}
+		if (thinking) {
+			selector.thinkingLevel = thinking.level;
+			selector.onThinkingChange = thinking.onChange;
 		}
 		selector.open();
 		selector.loadCustomProviders();
@@ -262,6 +276,38 @@ export class ModelSelector extends DialogBase {
 		return filteredModels;
 	}
 
+	private renderThinkingLevels(): TemplateResult | string {
+		const model = this.currentModel;
+		if (!this.onThinkingChange || this.thinkingLevel === undefined || !model?.reasoning) return "";
+		const levels: Array<{ value: ThinkingLevel; label: string }> = [
+			{ value: "off", label: i18n("Off") },
+			{ value: "minimal", label: i18n("Minimal") },
+			{ value: "low", label: i18n("Low") },
+			{ value: "medium", label: i18n("Medium") },
+			{ value: "high", label: i18n("High") },
+		];
+		if (supportsXhigh(model)) levels.push({ value: "xhigh", label: i18n("Extra high") });
+		return html`
+			<div class="flex flex-col gap-2">
+				<span class="text-xs text-muted-foreground inline-flex items-center gap-1">${icon(Brain, "sm")} ${i18n("Thinking")}</span>
+				<div class="flex flex-wrap gap-1">
+					${levels.map(({ value, label }) =>
+						Button({
+							variant: this.thinkingLevel === value ? "default" : "secondary",
+							size: "sm",
+							onClick: () => {
+								this.thinkingLevel = value;
+								this.onThinkingChange?.(value);
+							},
+							className: "rounded-full",
+							children: label,
+						}),
+					)}
+				</div>
+			</div>
+		`;
+	}
+
 	private scrollToSelected() {
 		requestAnimationFrame(() => {
 			const scrollContainer = this.scrollContainerRef.value;
@@ -280,7 +326,7 @@ export class ModelSelector extends DialogBase {
 		return html`
 			<!-- Header and Search -->
 			<div class="p-6 pb-4 flex flex-col gap-4 border-b border-border flex-shrink-0">
-				${DialogHeader({ title: i18n("Select Model") })}
+				${DialogHeader({ title: i18n("Select Model") })} ${this.renderThinkingLevels()}
 				${Input({
 					placeholder: i18n("Search models..."),
 					value: this.searchQuery,
