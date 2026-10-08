@@ -48,7 +48,7 @@ export function renderHeader(
 		case "complete":
 			return html`
 				<div class="flex items-center gap-2 text-sm text-muted-foreground">
-					${statusIcon(toolIcon, "text-green-600 dark:text-green-500")}
+					${statusIcon(toolIcon, "text-muted-foreground")}
 					${text}
 				</div>
 			`;
@@ -108,11 +108,7 @@ export function renderCollapsibleHeader(
 	};
 
 	const toolIconColor =
-		state === "complete"
-			? "text-green-600 dark:text-green-500"
-			: state === "error"
-				? "text-destructive"
-				: "text-foreground";
+		state === "complete" ? "text-muted-foreground" : state === "error" ? "text-destructive" : "text-foreground";
 
 	return html`
 		<button @click=${toggleContent} class="flex items-center justify-between gap-2 text-sm text-muted-foreground w-full text-left hover:text-foreground transition-colors cursor-pointer">

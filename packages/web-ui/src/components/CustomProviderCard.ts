@@ -30,10 +30,10 @@ export class CustomProviderCard extends LitElement {
 
 		const statusIcon =
 			this.status.status === "connected"
-				? html`<span class="text-green-500">●</span>`
+				? html`<span class="text-foreground">●</span>`
 				: this.status.status === "checking"
-					? html`<span class="text-yellow-500">●</span>`
-					: html`<span class="text-red-500">●</span>`;
+					? html`<span class="text-muted-foreground">●</span>`
+					: html`<span class="text-destructive">●</span>`;
 
 		const statusText =
 			this.status.status === "connected"

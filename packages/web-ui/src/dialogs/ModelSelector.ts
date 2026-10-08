@@ -392,7 +392,7 @@ export class ModelSelector extends DialogBase {
 							<div class="flex items-center justify-between gap-2 mb-1">
 								<div class="flex items-center gap-2 flex-1 min-w-0">
 									<span class="text-sm font-medium text-foreground truncate">${id}</span>
-									${isCurrent ? html`<span class="text-green-500">✓</span>` : ""}
+									${isCurrent ? html`<span class="text-foreground">✓</span>` : ""}
 								</div>
 								${Badge(provider, "outline")}
 							</div>

@@ -122,7 +122,7 @@ export class ProviderKeyInput extends LitElement {
 						this.testing
 							? Badge({ children: i18n("Testing..."), variant: "secondary" })
 							: this.hasKey
-								? html`<span class="text-green-600 dark:text-green-400">✓</span>`
+								? html`<span class="text-foreground">✓</span>`
 								: ""
 					}
 					${this.failed ? Badge({ children: i18n("✗ Invalid"), variant: "destructive" }) : ""}
