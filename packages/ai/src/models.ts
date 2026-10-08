@@ -36,6 +36,28 @@ export function getModels<TProvider extends KnownProvider>(
 	return models ? (Array.from(models.values()) as Model<ModelApi<TProvider, keyof (typeof MODELS)[TProvider]>>[]) : [];
 }
 
+export function registerModels(provider: string, models: Model<Api>[]): void {
+	const providerModels = new Map<string, Model<Api>>();
+	for (const model of models) providerModels.set(model.id, model);
+	modelRegistry.set(provider, providerModels);
+}
+
+export function resetProviderModels(provider: string): void {
+	const generated = (MODELS as Record<string, Record<string, Model<Api>>>)[provider];
+	if (!generated) {
+		modelRegistry.delete(provider);
+		return;
+	}
+	const providerModels = new Map<string, Model<Api>>();
+	for (const [id, model] of Object.entries(generated)) providerModels.set(id, model);
+	modelRegistry.set(provider, providerModels);
+}
+
+export function getGeneratedModels(provider: string): Model<Api>[] {
+	const generated = (MODELS as Record<string, Record<string, Model<Api>>>)[provider];
+	return generated ? Object.values(generated) : [];
+}
+
 export function calculateCost<TApi extends Api>(model: Model<TApi>, usage: Usage): Usage["cost"] {
 	usage.cost.input = (model.cost.input / 1000000) * usage.input;
 	usage.cost.output = (model.cost.output / 1000000) * usage.output;
