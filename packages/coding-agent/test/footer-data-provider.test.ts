@@ -155,8 +155,11 @@ describe("FooterDataProvider reftable branch detection", () => {
 			const onBranchChange = vi.fn();
 			provider.onBranchChange(onBranchChange);
 
-			writeFileSync(join(reftableDir, "tables.list"), "1\n");
-			await waitFor(() => vi.mocked(spawnSync).mock.calls.length > 0);
+			// macOS may register a new fs watcher after the first write under worker load.
+			await waitFor(() => {
+				writeFileSync(join(reftableDir, "tables.list"), "1\n");
+				return vi.mocked(spawnSync).mock.calls.length > 0;
+			});
 
 			expect(provider.getGitBranch()).toBe("main");
 			expect(onBranchChange).not.toHaveBeenCalled();
@@ -174,13 +177,11 @@ describe("FooterDataProvider reftable branch detection", () => {
 			expect(provider.getGitBranch()).toBe("main");
 			resolvedBranch = "foo";
 
-			await new Promise<void>((resolve, reject) => {
-				const timeout = setTimeout(() => reject(new Error("Timed out waiting for branch change")), 2000);
-				provider.onBranchChange(() => {
-					clearTimeout(timeout);
-					resolve();
-				});
+			const onBranchChange = vi.fn();
+			provider.onBranchChange(onBranchChange);
+			await waitFor(() => {
 				writeFileSync(join(reftableDir, "tables.list"), "1\n");
+				return onBranchChange.mock.calls.length > 0;
 			});
 
 			expect(provider.getGitBranch()).toBe("foo");
