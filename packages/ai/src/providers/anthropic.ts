@@ -32,6 +32,10 @@ import { buildCopilotDynamicHeaders, hasCopilotVisionInput } from "./github-copi
 import { adjustMaxTokensForThinking, buildBaseOptions } from "./simple-options.js";
 import { transformMessages } from "./transform-messages.js";
 
+// Keep the existing Messages API contract, including temperature for older models.
+// SDK 1.x defaults to 2026-10-21, which removes sampling parameters.
+type CompatibleMessageParams = MessageCreateParamsStreaming & { temperature?: number };
+
 /**
  * Resolve cache retention preference.
  * Defaults to "short" and uses PI_CACHE_RETENTION for backward compatibility.
@@ -256,7 +260,13 @@ export const streamAnthropic: StreamFunction<"anthropic-messages", AnthropicOpti
 			if (nextParams !== undefined) {
 				params = nextParams as MessageCreateParamsStreaming;
 			}
-			const anthropicStream = client.messages.stream({ ...params, stream: true }, { signal: options?.signal });
+			const anthropicStream = client.messages.stream(
+				{ ...params, stream: true },
+				{
+					signal: options?.signal,
+					headers: mergeHeaders({ "anthropic-version": "2023-06-01" }, model.headers, options?.headers),
+				},
+			);
 			stream.push({ type: "start", partial: output });
 
 			type Block = (ThinkingContent | TextContent | (ToolCall & { partialJson: string })) & { index: number };
@@ -590,15 +600,19 @@ function createClient(
 		apiKey,
 		baseURL: model.baseUrl,
 		dangerouslyAllowBrowser: true,
-		defaultHeaders: mergeHeaders(
-			{
-				accept: "application/json",
-				"anthropic-dangerous-direct-browser-access": "true",
-				"anthropic-beta": betaFeatures.join(","),
-			},
-			model.headers,
-			optionsHeaders,
-		),
+		defaultHeaders: {
+			authorization: null,
+			...mergeHeaders(
+				{
+					accept: "application/json",
+					"x-api-key": apiKey,
+					"anthropic-dangerous-direct-browser-access": "true",
+					"anthropic-beta": betaFeatures.join(","),
+				},
+				model.headers,
+				optionsHeaders,
+			),
+		},
 	});
 
 	return { client, isOAuthToken: false };
@@ -609,9 +623,9 @@ function buildParams(
 	context: Context,
 	isOAuthToken: boolean,
 	options?: AnthropicOptions,
-): MessageCreateParamsStreaming {
+): CompatibleMessageParams {
 	const { cacheControl } = getCacheControl(model.baseUrl, options?.cacheRetention);
-	const params: MessageCreateParamsStreaming = {
+	const params: CompatibleMessageParams = {
 		model: model.id,
 		messages: convertMessages(context.messages, model, isOAuthToken, cacheControl),
 		max_tokens: options?.maxTokens || (model.maxTokens / 3) | 0,

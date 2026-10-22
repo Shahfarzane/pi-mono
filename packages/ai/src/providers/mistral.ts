@@ -1,12 +1,12 @@
-import { Mistral } from "@mistralai/mistralai";
 import type { RequestOptions } from "@mistralai/mistralai/lib/sdks.js";
 import type {
 	ChatCompletionStreamRequest,
-	ChatCompletionStreamRequestMessages,
+	ChatCompletionStreamRequestMessage,
 	CompletionEvent,
 	ContentChunk,
 	FunctionTool,
 } from "@mistralai/mistralai/models/components/index.js";
+import { Chat } from "@mistralai/mistralai/sdk/chat.js";
 import { getEnvApiKey } from "../env-api-keys.js";
 import { calculateCost } from "../models.js";
 import type {
@@ -61,7 +61,7 @@ export const streamMistral: StreamFunction<"mistral-conversations", MistralOptio
 			}
 
 			// Intentionally per-request: avoids shared SDK mutable state across concurrent consumers.
-			const mistral = new Mistral({
+			const mistral = new Chat({
 				apiKey,
 				serverURL: model.baseUrl,
 			});
@@ -74,7 +74,7 @@ export const streamMistral: StreamFunction<"mistral-conversations", MistralOptio
 			if (nextPayload !== undefined) {
 				payload = nextPayload as ChatCompletionStreamRequest;
 			}
-			const mistralStream = await mistral.chat.stream(payload, buildRequestOptions(model, options));
+			const mistralStream = await mistral.stream(payload, buildRequestOptions(model, options));
 			stream.push({ type: "start", partial: output });
 			await consumeChatStream(model, output, stream, mistralStream);
 
@@ -311,7 +311,7 @@ async function consumeChatStream(
 			for (const item of contentItems) {
 				if (typeof item === "string") {
 					const textDelta = sanitizeSurrogates(item);
-					if (!currentBlock || currentBlock.type !== "text") {
+					if (currentBlock?.type !== "text") {
 						finishCurrentBlock(currentBlock);
 						currentBlock = { type: "text", text: "" };
 						output.content.push(currentBlock);
@@ -334,7 +334,7 @@ async function consumeChatStream(
 						.join("");
 					const thinkingDelta = sanitizeSurrogates(deltaText);
 					if (!thinkingDelta) continue;
-					if (!currentBlock || currentBlock.type !== "thinking") {
+					if (currentBlock?.type !== "thinking") {
 						finishCurrentBlock(currentBlock);
 						currentBlock = { type: "thinking", thinking: "" };
 						output.content.push(currentBlock);
@@ -352,7 +352,7 @@ async function consumeChatStream(
 
 				if (item.type === "text") {
 					const textDelta = sanitizeSurrogates(item.text);
-					if (!currentBlock || currentBlock.type !== "text") {
+					if (currentBlock?.type !== "text") {
 						finishCurrentBlock(currentBlock);
 						currentBlock = { type: "text", text: "" };
 						output.content.push(currentBlock);
@@ -446,8 +446,8 @@ function toFunctionTools(tools: Tool[]): Array<FunctionTool & { type: "function"
 	}));
 }
 
-function toChatMessages(messages: Message[], supportsImages: boolean): ChatCompletionStreamRequestMessages[] {
-	const result: ChatCompletionStreamRequestMessages[] = [];
+function toChatMessages(messages: Message[], supportsImages: boolean): ChatCompletionStreamRequestMessage[] {
+	const result: ChatCompletionStreamRequestMessage[] = [];
 
 	for (const msg of messages) {
 		if (msg.role === "user") {
@@ -499,7 +499,7 @@ function toChatMessages(messages: Message[], supportsImages: boolean): ChatCompl
 				});
 			}
 
-			const assistantMessage: ChatCompletionStreamRequestMessages = { role: "assistant" };
+			const assistantMessage: ChatCompletionStreamRequestMessage = { role: "assistant" };
 			if (contentParts.length > 0) assistantMessage.content = contentParts;
 			if (toolCalls.length > 0) assistantMessage.toolCalls = toolCalls;
 			if (contentParts.length > 0 || toolCalls.length > 0) result.push(assistantMessage);
