@@ -98,27 +98,27 @@ export type { Skill } from "./skills.js";
 export type { Tool } from "./tools/index.js";
 
 export {
-	// Pre-built tools (use process.cwd())
-	readTool,
-	bashTool,
-	editTool,
-	writeTool,
-	grepTool,
-	findTool,
-	lsTool,
-	codingTools,
-	readOnlyTools,
 	allTools as allBuiltInTools,
+	bashTool,
+	codingTools,
+	createBashTool,
 	// Tool factories (for custom cwd)
 	createCodingTools,
+	createEditTool,
+	createFindTool,
+	createGrepTool,
+	createLsTool,
 	createReadOnlyTools,
 	createReadTool,
-	createBashTool,
-	createEditTool,
 	createWriteTool,
-	createGrepTool,
-	createFindTool,
-	createLsTool,
+	editTool,
+	findTool,
+	grepTool,
+	lsTool,
+	readOnlyTools,
+	// Pre-built tools (use process.cwd())
+	readTool,
+	writeTool,
 };
 
 // Helper Functions
@@ -234,7 +234,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 	}
 
 	// Clamp to model capabilities
-	if (!model || !model.reasoning) {
+	if (!model?.reasoning) {
 		thinkingLevel = "off";
 	}
 

@@ -157,7 +157,7 @@ export const streamOpenAICompletions: StreamFunction<"openai-completions", OpenA
 						choice.delta.content !== undefined &&
 						choice.delta.content.length > 0
 					) {
-						if (!currentBlock || currentBlock.type !== "text") {
+						if (currentBlock?.type !== "text") {
 							finishCurrentBlock(currentBlock);
 							currentBlock = { type: "text", text: "" };
 							output.content.push(currentBlock);
@@ -195,7 +195,7 @@ export const streamOpenAICompletions: StreamFunction<"openai-completions", OpenA
 					}
 
 					if (foundReasoningField) {
-						if (!currentBlock || currentBlock.type !== "thinking") {
+						if (currentBlock?.type !== "thinking") {
 							finishCurrentBlock(currentBlock);
 							currentBlock = {
 								type: "thinking",
@@ -220,11 +220,7 @@ export const streamOpenAICompletions: StreamFunction<"openai-completions", OpenA
 
 					if (choice?.delta?.tool_calls) {
 						for (const toolCall of choice.delta.tool_calls) {
-							if (
-								!currentBlock ||
-								currentBlock.type !== "toolCall" ||
-								(toolCall.id && currentBlock.id !== toolCall.id)
-							) {
+							if (currentBlock?.type !== "toolCall" || (toolCall.id && currentBlock.id !== toolCall.id)) {
 								finishCurrentBlock(currentBlock);
 								currentBlock = {
 									type: "toolCall",
