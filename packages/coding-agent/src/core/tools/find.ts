@@ -181,7 +181,12 @@ export function createFindTool(cwd: string, options?: FindToolOptions): AgentToo
 							args.push("--ignore-file", gitignorePath);
 						}
 
-						args.push(pattern, searchPath);
+						// fd matches basenames by default; path globs must match from the search root.
+						if (pattern.includes("/")) {
+							args.push("--full-path", path.join(searchPath, pattern), searchPath);
+						} else {
+							args.push(pattern, searchPath);
+						}
 
 						const result = spawnSync(fdPath, args, {
 							encoding: "utf-8",
