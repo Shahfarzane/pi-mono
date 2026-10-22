@@ -619,7 +619,7 @@ export function prepareCompaction(
 	const boundaryStart = prevCompactionIndex + 1;
 	const boundaryEnd = pathEntries.length;
 
-	const usageStart = prevCompactionIndex >= 0 ? prevCompactionIndex : 0;
+	const usageStart = Math.max(prevCompactionIndex, 0);
 	const usageMessages: AgentMessage[] = [];
 	for (let i = usageStart; i < boundaryEnd; i++) {
 		const msg = getMessageFromEntry(pathEntries[i]);
