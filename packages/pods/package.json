@@ -30,11 +30,11 @@
 		"directory": "packages/pods"
 	},
 	"engines": {
-		"node": ">=20.0.0"
+		"node": "^22.22.2 || ^24.15.0 || >=26.0.0"
 	},
 	"dependencies": {
 		"@mariozechner/pi-agent-core": "^0.60.0",
-		"chalk": "^5.5.0"
+		"chalk": "^6.0.1"
 	},
 	"devDependencies": {}
 }
