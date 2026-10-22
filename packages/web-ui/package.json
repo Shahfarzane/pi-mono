@@ -17,14 +17,14 @@
 		"check": "biome check --write --error-on-warnings . && tsc --noEmit && cd example && biome check --write --error-on-warnings . && tsc --noEmit"
 	},
 	"dependencies": {
-		"@lmstudio/sdk": "^1.5.0",
+		"@lmstudio/sdk": "^2.1.0",
 		"@mariozechner/pi-ai": "^0.60.0",
 		"@mariozechner/pi-tui": "^0.60.0",
-		"docx-preview": "^0.3.7",
-		"jszip": "^3.10.1",
-		"lucide": "^0.544.0",
-		"ollama": "^0.6.0",
-		"pdfjs-dist": "5.4.394",
+		"docx-preview": "^0.4.1",
+		"jszip": "^3.10.2",
+		"lucide": "^1.61.0",
+		"ollama": "^0.6.4",
+		"pdfjs-dist": "6.4.299",
 		"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
 	},
 	"peerDependencies": {
@@ -33,9 +33,9 @@
 	},
 	"devDependencies": {
 		"@mariozechner/mini-lit": "^0.2.0",
-		"@tailwindcss/cli": "^4.0.0-beta.14",
-		"concurrently": "^9.2.1",
-		"typescript": "^5.7.3"
+		"@tailwindcss/cli": "^4.3.3",
+		"concurrently": "^10.0.6",
+		"typescript": "^7.0.2"
 	},
 	"keywords": [
 		"ai",
