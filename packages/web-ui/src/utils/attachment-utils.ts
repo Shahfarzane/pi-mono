@@ -204,9 +204,9 @@ async function processPdf(
 	arrayBuffer: ArrayBuffer,
 	fileName: string,
 ): Promise<{ extractedText: string; preview?: string }> {
-	let pdf: PDFDocumentProxy | null = null;
+	const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
 	try {
-		pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+		const pdf = await loadingTask.promise;
 
 		// Extract text with page structure
 		let extractedText = `<pdf filename="${fileName}">`;
@@ -230,9 +230,7 @@ async function processPdf(
 		throw new Error(`Failed to process PDF: ${String(error)}`);
 	} finally {
 		// Clean up PDF resources
-		if (pdf) {
-			pdf.destroy();
-		}
+		await loadingTask.destroy();
 	}
 }
 

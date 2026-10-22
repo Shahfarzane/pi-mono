@@ -12,7 +12,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.mi
 export class PdfArtifact extends ArtifactElement {
 	@property({ type: String }) private _content = "";
 	@state() private error: string | null = null;
-	private currentLoadingTask: any = null;
+	private currentLoadingTask: pdfjsLib.PDFDocumentLoadingTask | null = null;
 
 	get content(): string {
 		return this._content;
@@ -106,7 +106,7 @@ export class PdfArtifact extends ArtifactElement {
 		const container = this.querySelector("#pdf-container");
 		if (!container || !this._content) return;
 
-		let pdf: any = null;
+		let loadingTask: pdfjsLib.PDFDocumentLoadingTask | null = null;
 
 		try {
 			const arrayBuffer = this.base64ToArrayBuffer(this._content);
@@ -117,9 +117,9 @@ export class PdfArtifact extends ArtifactElement {
 			}
 
 			// Load the PDF
-			this.currentLoadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-			pdf = await this.currentLoadingTask.promise;
-			this.currentLoadingTask = null;
+			loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+			this.currentLoadingTask = loadingTask;
+			const pdf = await loadingTask.promise;
 
 			// Clear container
 			container.innerHTML = "";
@@ -168,8 +168,9 @@ export class PdfArtifact extends ArtifactElement {
 			console.error("Error rendering PDF:", error);
 			this.error = error?.message || i18n("Failed to load PDF");
 		} finally {
-			if (pdf) {
-				pdf.destroy();
+			await loadingTask?.destroy();
+			if (this.currentLoadingTask === loadingTask) {
+				this.currentLoadingTask = null;
 			}
 		}
 	}
