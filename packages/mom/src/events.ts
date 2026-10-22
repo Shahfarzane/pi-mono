@@ -2,6 +2,7 @@ import { Cron } from "croner";
 import { existsSync, type FSWatcher, mkdirSync, readdirSync, statSync, unlinkSync, watch } from "fs";
 import { readFile } from "fs/promises";
 import { join } from "path";
+import { normalizeLegacySchedule } from "./cron-schedule.js";
 import * as log from "./log.js";
 import type { SlackBot, SlackEvent } from "./slack.js";
 
@@ -71,7 +72,7 @@ export class EventsWatcher {
 
 		// Watch for changes
 		this.watcher = watch(this.eventsDir, (_eventType, filename) => {
-			if (!filename || !filename.endsWith(".json")) return;
+			if (!filename?.endsWith(".json")) return;
 			this.debounce(filename, () => this.handleFileChange(filename));
 		});
 
@@ -300,10 +301,14 @@ export class EventsWatcher {
 
 	private handlePeriodic(filename: string, event: PeriodicEvent): void {
 		try {
-			const cron = new Cron(event.schedule, { timezone: event.timezone }, () => {
-				log.logInfo(`Executing periodic event: ${filename}`);
-				this.execute(filename, event, false); // Don't delete periodic events
-			});
+			const cron = new Cron(
+				normalizeLegacySchedule(event.schedule, event.timezone),
+				{ timezone: event.timezone, sloppyRanges: true, mode: "5-or-6-parts" },
+				() => {
+					log.logInfo(`Executing periodic event: ${filename}`);
+					this.execute(filename, event, false); // Don't delete periodic events
+				},
+			);
 
 			this.crons.set(filename, cron);
 
