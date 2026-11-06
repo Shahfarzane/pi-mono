@@ -286,7 +286,6 @@ export class AgentInterface extends LitElement {
 					.tools=${state.tools}
 					.pendingToolCalls=${this.session ? this.session.state.pendingToolCalls : new Set<string>()}
 					.isStreaming=${state.isStreaming}
-					.onCostClick=${this.onCostClick}
 				></message-list>
 
 				<!-- Streaming message container - manages its own updates -->
@@ -296,7 +295,6 @@ export class AgentInterface extends LitElement {
 					.isStreaming=${state.isStreaming}
 					.pendingToolCalls=${state.pendingToolCalls}
 					.toolResultsById=${toolResultsById}
-					.onCostClick=${this.onCostClick}
 				></streaming-message-container>
 			</div>
 		`;

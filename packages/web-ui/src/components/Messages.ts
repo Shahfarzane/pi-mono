@@ -10,7 +10,6 @@ import { html, LitElement, type TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { renderTool } from "../tools/index.js";
 import type { Attachment } from "../utils/attachment-utils.js";
-import { formatUsage } from "../utils/format.js";
 import { i18n } from "../utils/i18n.js";
 import "./ThinkingBlock.js";
 import type { AgentTool } from "@mariozechner/pi-agent-core";
@@ -90,7 +89,6 @@ export class AssistantMessage extends LitElement {
 	@property({ type: Object }) toolResultsById?: Map<string, ToolResultMessageType>;
 	@property({ type: Boolean }) isStreaming: boolean = false;
 	@property({ type: Boolean }) hidePendingToolCalls = false;
-	@property({ attribute: false }) onCostClick?: () => void;
 
 	protected override createRenderRoot(): HTMLElement | DocumentFragment {
 		return this;
@@ -138,17 +136,9 @@ export class AssistantMessage extends LitElement {
 			}
 		}
 
-		// Per-message usage shows on hover; the running total stays in the stats row below the composer.
 		return html`
-			<div class="group">
+			<div>
 				${orderedParts.length ? html` <div class="flex flex-col gap-3">${orderedParts}</div> ` : ""}
-				${
-					this.message.usage && !this.isStreaming
-						? this.onCostClick
-							? html` <div class="mt-1 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:text-foreground" @click=${this.onCostClick}>${formatUsage(this.message.usage)}</div> `
-							: html` <div class="mt-1 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">${formatUsage(this.message.usage)}</div> `
-						: ""
-				}
 				${
 					this.message.stopReason === "error" && this.message.errorMessage
 						? html`
