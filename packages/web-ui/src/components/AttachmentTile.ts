@@ -59,7 +59,7 @@ export class AttachmentTile extends LitElement {
 									isPdf
 										? html`
 											<!-- PDF badge overlay -->
-											<div class="absolute bottom-0 left-0 right-0 bg-background/90 px-1 py-0.5 rounded-b-lg">
+											<div class="absolute bottom-0 left-0 right-0 bg-background/90 p-1 rounded-b-lg">
 												<div class="text-[10px] text-muted-foreground text-center font-medium">${i18n("PDF")}</div>
 											</div>
 										`

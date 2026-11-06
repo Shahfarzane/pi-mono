@@ -59,8 +59,8 @@ export class UserMessage extends LitElement {
 				: this.message.content.find((c) => c.type === "text")?.text || "";
 
 		return html`
-			<div class="flex justify-start mx-4">
-				<div class="user-message-container py-2 px-4 rounded-xl">
+			<div class="flex justify-end">
+				<div class="user-message-container py-3 px-4 rounded-2xl">
 					<markdown-block .content=${content}></markdown-block>
 					${
 						this.message.role === "user-with-attachments" &&
@@ -141,18 +141,18 @@ export class AssistantMessage extends LitElement {
 		// Per-message usage shows on hover; the running total stays in the stats row below the composer.
 		return html`
 			<div class="group">
-				${orderedParts.length ? html` <div class="px-4 flex flex-col gap-3">${orderedParts}</div> ` : ""}
+				${orderedParts.length ? html` <div class="flex flex-col gap-3">${orderedParts}</div> ` : ""}
 				${
 					this.message.usage && !this.isStreaming
 						? this.onCostClick
-							? html` <div class="px-4 mt-1 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:text-foreground" @click=${this.onCostClick}>${formatUsage(this.message.usage)}</div> `
-							: html` <div class="px-4 mt-1 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">${formatUsage(this.message.usage)}</div> `
+							? html` <div class="mt-1 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:text-foreground" @click=${this.onCostClick}>${formatUsage(this.message.usage)}</div> `
+							: html` <div class="mt-1 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">${formatUsage(this.message.usage)}</div> `
 						: ""
 				}
 				${
 					this.message.stopReason === "error" && this.message.errorMessage
 						? html`
-							<div class="mx-4 mt-3 p-3 bg-destructive/10 text-destructive rounded-lg text-sm overflow-hidden">
+							<div class="mt-3 p-3 bg-destructive/10 text-destructive rounded-lg text-sm overflow-hidden">
 								<strong>${i18n("Error:")}</strong> ${this.message.errorMessage}
 							</div>
 						`
@@ -270,7 +270,7 @@ export class ToolMessage extends LitElement {
 
 		// Default: wrap in card
 		return html`
-			<div class="p-2.5 border border-border rounded-md bg-card text-card-foreground shadow-xs">
+			<div class="p-3 border border-border rounded-lg bg-card text-card-foreground">
 				${renderResult.content}
 			</div>
 		`;

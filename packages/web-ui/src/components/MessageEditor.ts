@@ -5,7 +5,7 @@ import type { Model } from "@mariozechner/pi-ai";
 import { html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { createRef, ref } from "lit/directives/ref.js";
-import { ArrowUp, Brain, Loader2, Paperclip, Square } from "lucide";
+import { ArrowUp, Brain, Loader2, Plus, Square } from "lucide";
 import { type Attachment, loadAttachment } from "../utils/attachment-utils.js";
 import { i18n } from "../utils/i18n.js";
 import "./AttachmentTile.js";
@@ -384,7 +384,7 @@ export class MessageEditor extends LitElement {
 
 		return html`
 			<div
-				class="bg-card rounded-xl border shadow-sm relative ${this.isDragging ? "border-primary border-2 bg-primary/5" : "border-border"}"
+				class="bg-card rounded-[20px] border relative ${this.isDragging ? "border-primary border-2 bg-primary/5" : "border-border"}"
 				@dragover=${this.handleDragOver}
 				@dragleave=${this.handleDragLeave}
 				@drop=${this.handleDrop}
@@ -393,7 +393,7 @@ export class MessageEditor extends LitElement {
 				${
 					this.isDragging
 						? html`
-					<div class="absolute inset-0 bg-primary/10 rounded-xl pointer-events-none z-10 flex items-center justify-center">
+					<div class="absolute inset-0 bg-primary/10 rounded-[20px] pointer-events-none z-10 flex items-center justify-center">
 						<div class="text-primary font-medium">${i18n("Drop files here")}</div>
 					</div>
 				`
@@ -406,7 +406,7 @@ export class MessageEditor extends LitElement {
 				${
 					this.attachments.length > 0
 						? html`
-							<div class="px-4 pt-3 pb-2 flex flex-wrap gap-2">
+							<div class="px-3 pt-3 flex flex-wrap gap-2">
 								${this.attachments.map(
 									(attachment) => html`
 										<attachment-tile
@@ -422,8 +422,8 @@ export class MessageEditor extends LitElement {
 				}
 
 				<textarea
-					class="w-full bg-transparent p-4 text-foreground placeholder-muted-foreground outline-none resize-none overflow-y-auto"
-					placeholder=${i18n("Type a message...")}
+					class="block w-full bg-transparent px-4 pt-4 pb-2 text-base text-foreground placeholder:text-foreground/50 outline-none resize-none overflow-y-auto"
+					placeholder=${i18n("Ask anything...")}
 					rows="1"
 					style="max-height: 200px; field-sizing: content; min-height: 1lh; height: auto;"
 					.value=${this.value}
@@ -445,14 +445,14 @@ export class MessageEditor extends LitElement {
 				/>
 
 				<!-- Button Row -->
-				<div class="px-2 pb-2 flex items-center justify-between">
+				<div class="h-8 mb-3 px-3 flex items-center justify-between gap-2">
 					<!-- Left side - attachment and thinking selector -->
-					<div class="flex gap-2 items-center">
+					<div class="flex gap-1 items-center shrink-0">
 						${
 							this.showAttachmentButton
 								? this.processingFiles
 									? html`
-										<div class="h-8 w-8 flex items-center justify-center">
+										<div class="size-8 flex items-center justify-center">
 											${icon(Loader2, "sm", "animate-spin text-muted-foreground")}
 										</div>
 									`
@@ -460,9 +460,10 @@ export class MessageEditor extends LitElement {
 										${Button({
 											variant: "ghost",
 											size: "icon",
-											className: "h-8 w-8",
+											className: "rounded-full! text-muted-foreground",
 											onClick: this.handleAttachmentClick,
-											children: icon(Paperclip, "sm"),
+											children: icon(Plus, "sm"),
+											title: i18n("Attach files"),
 										})}
 									`
 								: ""
@@ -496,7 +497,7 @@ export class MessageEditor extends LitElement {
 					</div>
 
 					<!-- Model selector and send on the right -->
-					<div class="flex gap-2 items-center">
+					<div class="flex gap-2 items-center justify-end min-w-0">
 						${
 							this.showModelSelector && this.currentModel
 								? html`
@@ -511,8 +512,8 @@ export class MessageEditor extends LitElement {
 												this.onModelSelect?.();
 											});
 										},
-										children: html`<span>${this.currentModel.id}</span>`,
-										className: "h-8 text-xs truncate",
+										children: html`<span class="truncate">${this.currentModel.id}</span>`,
+										className: "px-2! shrink! min-w-0 text-sm! font-normal text-muted-foreground",
 									})}
 								`
 								: ""
@@ -525,22 +526,18 @@ export class MessageEditor extends LitElement {
 										size: "icon",
 										onClick: this.onAbort,
 										children: icon(Square, "xs"),
-										className: "h-8 w-8",
+										className: "rounded-full!",
 										title: "Stop",
 									})}
 								`
 								: html`
 									${Button({
-										// The one filled control in the composer, once there is something to send.
-										variant:
-											(this.value.trim() || this.attachments.length > 0) && !this.processingFiles
-												? "default"
-												: "ghost",
+										variant: "default",
 										size: "icon",
 										onClick: this.handleSend,
 										disabled: (!this.value.trim() && this.attachments.length === 0) || this.processingFiles,
 										children: icon(ArrowUp, "sm"),
-										className: "h-8 w-8",
+										className: "rounded-full!",
 										title: "Send",
 									})}
 								`

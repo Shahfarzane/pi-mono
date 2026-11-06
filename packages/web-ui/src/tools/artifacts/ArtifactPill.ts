@@ -14,7 +14,7 @@ export function ArtifactPill(filename: string, artifactsPanel?: ArtifactsPanel):
 
 	return html`
 		<span
-			class="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-muted/50 border border-border rounded ${
+			class="inline-flex items-center gap-1 px-2 py-1 text-xs bg-muted/50 border border-border rounded ${
 				artifactsPanel ? "cursor-pointer hover:bg-muted transition-colors" : ""
 			}"
 			@click=${artifactsPanel ? handleClick : null}

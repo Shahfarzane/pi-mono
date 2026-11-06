@@ -65,7 +65,7 @@ export class StreamingMessageContainer extends LitElement {
 		if (!this._message) {
 			if (this.isStreaming)
 				return html`<div class="flex flex-col gap-3 mb-3">
-					<span class="mx-4 inline-block w-2 h-4 bg-muted-foreground animate-pulse"></span>
+					<span class="inline-block w-2 h-4 bg-muted-foreground animate-pulse"></span>
 				</div>`;
 			return html``; // Empty until a message is set
 		}
@@ -90,7 +90,7 @@ export class StreamingMessageContainer extends LitElement {
 						.hideToolCalls=${false}
 						.onCostClick=${this.onCostClick}
 					></assistant-message>
-					${this.isStreaming ? html`<span class="mx-4 inline-block w-2 h-4 bg-muted-foreground animate-pulse"></span>` : ""}
+					${this.isStreaming ? html`<span class="inline-block w-2 h-4 bg-muted-foreground animate-pulse"></span>` : ""}
 				</div>
 			`;
 		}
